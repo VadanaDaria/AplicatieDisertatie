@@ -7,12 +7,13 @@ def load_json(file_path):
         return json.load(f)
 
 json_files = {
-    "Homo_F508_1": "C:/Users/vadan/Desktop/Disertatie/Aplicatie/Homo_F508_1.json",
-    "Homo_Hetero_F508": "C:/Users/vadan/Desktop/Disertatie/Aplicatie/Homo_Hetero_F508.json",
-    "Non_F508": "C:/Users/vadan/Desktop/Disertatie/Aplicatie/Non_F508.json"
+    "Homo_F508_1": "Homo_F508_1.json",  # Calea relativă (fișierul e în același folder cu main.py)
+    "Homo_Hetero_F508": "Homo_Hetero_F508.json",  # Calea relativă
+    "Non_F508": "Non_F508.json"  # Calea relativă
 }
 
 data_studies = {key: load_json(path) for key, path in json_files.items()}
+
 
 #  Streamlit
 st.title("🧬Analiza Eficienței Tratamentelor Medicale pentru Fibroză Chistică")
