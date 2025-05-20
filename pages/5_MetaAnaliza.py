@@ -121,3 +121,89 @@ if st.button("Descarcă Forest Plot ca imagine"):
     st.markdown("## 🔎 Subgroup Analysis")
     subgroup = st.selectbox("Selectează subgrupul pentru analiză:", ["Sex", "Vârstă"])
   
+
+st.markdown("## 📊 Teste Statistice între Grupuri (Chi² și Indici de Diversitate)")
+
+#extragem din baselineCharacteristicmodule
+
+def extract_baseline_values(data, field_keyword, numeric=False):
+    extracted = []
+    for study_id, study_data in data.items():
+        try:
+            measures = study_data["resultsSection"]["baselineCharacteristicsModule"]["measures"]
+            for measure in measures:
+                if field_keyword.lower() in measure["title"].lower():
+                    for cls in measure["classes"]:
+                        for cat in cls["categories"]:
+                            for m in cat["measurements"]:
+                                value = m.get("value")
+                                if value is None:
+                                    continue
+                                try:
+                                    extracted.append({
+                                        "Studiu": study_id,
+                                        "Grup": m["groupId"],
+                                        "Categorie": cat["title"],
+                                        "Valoare": float(value) if numeric else value
+                                    })
+                                except ValueError:
+                                    if not numeric:
+                                        extracted.append({
+                                            "Studiu": study_id,
+                                            "Grup": m["groupId"],
+                                            "Categorie": cat["title"],
+                                            "Valoare": value
+                                        })
+        except KeyError:
+            continue
+    return pd.DataFrame(extracted)
+
+# indice de diverisitate
+def shannon_index(counts):
+    proportions = counts / counts.sum()
+    proportions = proportions[proportions > 0]  
+    return -np.sum(proportions * np.log(proportions))
+
+def gini_index(counts):
+    proportions = counts / counts.sum()
+    return 1 - np.sum(proportions ** 2)
+
+#Lista variabile anaizate
+categorical_vars = ["Sex", "Age", "Ethnicity", "Race"]
+
+for var in categorical_vars:
+    st.subheader(f"🧪 Test Chi-pătrat și Indici Diversitate: {var}")
+    df_cat = extract_baseline_values(meta_data, field_keyword=var, numeric=False)
+
+    if df_cat.empty:
+        st.warning(f"⚠️ Nu au fost găsite date pentru variabila `{var}`.")
+        continue
+
+# tabel cotingenta
+    chi_table = pd.crosstab(df_cat["Categorie"], df_cat["Grup"])
+    st.write(f"📋 Tabel de contingență ({var} vs Grup):")
+    st.dataframe(chi_table)
+
+   
+    # Chi-patraat
+    try:
+        chi2, p, dof, expected = stats.chi2_contingency(chi_table)
+        st.write(f"**Chi²:** {chi2:.2f} | **p-valoare:** {p:.4f}")
+        if p < 0.05:
+            st.success("✅ Distribuția diferă semnificativ între grupuri.")
+        else:
+            st.info("ℹ️ Nu s-au identificat diferențe semnificative între grupuri.")
+    except Exception as e:
+        st.error(f"⚠️ Eroare la testul Chi-pătrat: {e}")
+
+#calcul si afisare indice div
+   
+    st.write("📊 Indici de diversitate pentru fiecare grup:")
+    diversity_indices = []
+    for grp in chi_table.columns:
+        counts = chi_table[grp]
+        shannon = shannon_index(counts)
+        gini = gini_index(counts)
+        diversity_indices.append({"Grup": grp, "Shannon": shannon, "Gini": gini})
+    df_diversity = pd.DataFrame(diversity_indices)
+    st.dataframe(df_diversity)
