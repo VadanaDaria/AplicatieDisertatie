@@ -15,7 +15,7 @@ def load_data():
 data = load_data()
 
 
-st.title("📊 Explorare Liberă - Date Studiu")
+st.title("📊 Explorare Liberă")
 st.write("### Selectează un studiu pentru a vizualiza datele:")
 study = st.selectbox("Alege un studiu:", list(data.keys()))
 study_data = data[study]
@@ -76,3 +76,4 @@ else:
 with st.expander("🌐 Explorare Avansată (Debugging)"):
     st.write("📌 Tot JSON-ul:")
     st.json(study_data)
+

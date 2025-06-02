@@ -7,9 +7,9 @@ def load_json(file_path):
         return json.load(f)
 
 json_files = {
-    "Homo_F508_1": "Homo_F508_1.json",  # Calea relativă (fișierul e în același folder cu main.py)
-    "Homo_Hetero_F508": "Homo_Hetero_F508.json",  # Calea relativă
-    "Non_F508": "Non_F508.json"  # Calea relativă
+    "Homo_F508_1": "Homo_F508_1.json",  
+    "Homo_Hetero_F508": "Homo_Hetero_F508.json",  
+    "Non_F508": "Non_F508.json"  
 }
 
 data_studies = {key: load_json(path) for key, path in json_files.items()}

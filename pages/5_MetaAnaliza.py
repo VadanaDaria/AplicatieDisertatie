@@ -5,7 +5,6 @@ import numpy as np
 from scipy import stats
 import json
 
-
 def load_data():
     files = {
         "Homo_F508_1": "Homo_F508_1.json",
@@ -22,9 +21,7 @@ def load_data():
 
 meta_data = load_data()
 
-
 st.title("📊 Meta-Analiza Studiilor în Fibroză Cistică")
-
 
 st.write("### Selectează un studiu pentru a vizualiza datele:")
 studiu_selectat = st.selectbox("Selectează studiul pentru analiză", list(meta_data.keys()))
@@ -50,7 +47,6 @@ st.write("### Grupuri și număr de participanți:")
 for grup in grupe:
     grup_id = grup["id"]
     st.write(f"- {grup['title']}: {participanti_grupuri.get(grup_id, 0)} participanți")
-
 
 # ForestPlot
 date_grupuri = {
@@ -207,3 +203,5 @@ for var in categorical_vars:
         diversity_indices.append({"Grup": grp, "Shannon": shannon, "Gini": gini})
     df_diversity = pd.DataFrame(diversity_indices)
     st.dataframe(df_diversity)
+
+

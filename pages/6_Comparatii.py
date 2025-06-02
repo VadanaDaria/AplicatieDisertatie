@@ -48,7 +48,6 @@ def extract_measures(study_data):
     return pd.DataFrame(extracted)
 
 
-# DataFrame Global
 all_dataframes = [extract_measures(data[study]) for study in studies_selected]
 df_measures = pd.concat(all_dataframes, keys=studies_selected)
 st.dataframe(df_measures)

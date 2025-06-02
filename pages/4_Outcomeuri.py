@@ -1,9 +1,10 @@
 import streamlit as st
 import json
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
+import plotly.graph_objects as go
 
+st.set_page_config(page_title="Analiză CFQ-R și Test Sudorii", layout="wide")
 
 @st.cache_data
 def load_data():
@@ -12,147 +13,94 @@ def load_data():
         "Homo_Hetero_F508": "Homo_Hetero_F508.json",
         "Non_F508": "Non_F508.json"
     }
-    return {key: json.load(open(filename, encoding="utf-8")) for key, filename in files.items()}
+    data = {}
+    for key, filename in files.items():
+        with open(filename, encoding="utf-8") as f:
+            data[key] = json.load(f)
+    return data
 
+def extract_outcome_measurements(study_data, keywords):
+    outcomes = study_data.get("resultsSection", {}).get("outcomeMeasuresModule", {}).get("outcomeMeasures", [])
+    records = []
+    for outcome in outcomes:
+        if any(kw.lower() in outcome.get("title", "").lower() for kw in keywords):
+            title = outcome.get("title", "N/A")
+            measure_type = outcome.get("type", "N/A")
+            classes = outcome.get("classes", [])
+            for cls in classes:
+                for cat in cls.get("categories", []):
+                    for m in cat.get("measurements", []):
+                        records.append({
+                            "Measure": title,
+                            "Group": m.get("groupId", "N/A"),
+                            "Value": float(m.get("value", 0)),
+                            "Lower": float(m.get("lowerLimit", 0)),
+                            "Upper": float(m.get("upperLimit", 0))
+                        })
+    return pd.DataFrame(records)
 
 data = load_data()
+st.title("📊 Analiza Studiilor Clinice - CFQ-R și Testul Sudorii")
+study = st.selectbox("Selectează studiul:", ["Toate Studiile"] + list(data.keys()))
+measure_type = st.radio("Selectează măsura de analizat:", ("CFQ-R (Respiratory Domain Score)", "Testul Sudorii"))
 
-st.title("📊 Analiza Outcome-urilor în Studiile Clinice")
-st.write("### Selectează un studiu pentru a vizualiza datele:")
-study = st.selectbox("Alege studiul sau compară toate studiile:", ["Toate Studiile"] + list(data.keys()))
-
-# Statistici
-st.subheader("📊 Statistici pentru Outcome-uri")
-st.markdown('''Outcome-urile sunt măsurători specifice utilizate pentru a evalua eficacitatea și siguranța tratamentului în cadrul unui studiu clinic. 
-Acestea pot include parametri fiziologici, biochimici, calitatea vieții sau măsurători clinice obiective.''')
-
-
-# Extragere oucomes
-def get_outcomes_module(study_data):
-    return study_data.get("protocolSection", {}).get("outcomesModule", {})
+keywords = ["cfq-r"] if "CFQ-R" in measure_type else ["sweat chloride"]
 
 if study == "Toate Studiile":
-    primary_outcomes_list = []
-    secondary_outcomes_list = []
-
-   
-    for key, study_data in data.items():
-        outcomes_module = get_outcomes_module(study_data)
-        primary = outcomes_module.get("primaryOutcomes", [])
-        secondary = outcomes_module.get("secondaryOutcomes", [])
-
-        for outcome in primary:
-            primary_outcomes_list.append({
-                "Studiu": key,
-                "Măsură": outcome.get("measure", "N/A"),
-                "Interval de timp": outcome.get("timeFrame", "N/A")
-            })
-
-        for outcome in secondary:
-            secondary_outcomes_list.append({
-                "Studiu": key,
-                "Măsură": outcome.get("measure", "N/A"),
-                "Interval de timp": outcome.get("timeFrame", "N/A")
-            })
-
-    
-    # DataFrame-uri
-    primary_df = pd.DataFrame(primary_outcomes_list)
-    secondary_df = pd.DataFrame(secondary_outcomes_list)
-
-    st.markdown("### 📌 Outcome-uri Primare")
-    st.dataframe(primary_df, use_container_width=True)
-    st.markdown("### 📌 Outcome-uri Secundare")
-    st.dataframe(secondary_df, use_container_width=True)
-
-    
-    # Distributie pe Studii
-    st.markdown("### 🔎 Distribuția Outcome-urilor pe Studii")
-    
-    # Histograme
-    fig_primary = px.histogram(primary_df, x="Studiu", color="Studiu", title="Distribuția Outcome-urilor Primare")
-    st.plotly_chart(fig_primary, use_container_width=True)
-
-    fig_secondary = px.histogram(secondary_df, x="Studiu", color="Studiu", title="Distribuția Outcome-urilor Secundare")
-    st.plotly_chart(fig_secondary, use_container_width=True)
-
-   
-    #Box Plot distributie
-    st.subheader("📦 Box Plot pentru Distribuția Outcome-urilor")
-    fig_box = go.Figure()
-    fig_box.add_trace(go.Box(
-        y=primary_df["Măsură"],
-        name="Outcome Primar",
-        boxmean="sd"
-    ))
-    fig_box.update_layout(
-        title="Distribuția Outcome-urilor Primare (Box Plot)",
-        yaxis_title="Măsură",
-        height=600,
-        width=900
-    )
-    st.plotly_chart(fig_box, use_container_width=True)
-
- 
-    #Grafic Densitate
-    st.subheader("🌫️ Grafic de Densitate pentru Outcome-uri Primare")
-    fig_density = px.density_contour(primary_df, x="Măsură", title="Distribuția Densității Outcome-urilor Primare")
-    fig_density.update_layout(
-        height=600,
-        width=900
-    )
-    st.plotly_chart(fig_density, use_container_width=True)
-
-    # Grafic evolutie temporala
-    st.subheader("📈 Evoluția Temporală a Outcome-urilor")
-    if "Interval de timp" in primary_df.columns:
-        fig_time = px.line(primary_df, x="Interval de timp", y="Măsură", title="Evoluția Outcome-urilor Primare în Timp")
-        fig_time.update_layout(
-            height=600,
-            width=900
-        )
-        st.plotly_chart(fig_time, use_container_width=True)
-
+    dfs = []
+    for name, content in data.items():
+        df = extract_outcome_measurements(content, keywords)
+        if not df.empty:
+            df["Study"] = name
+            dfs.append(df)
+    df_filtered = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
 else:
-    
-    #Un singur studiu
-    study_data = data[study]
-    outcomes_module = get_outcomes_module(study_data)
+    df_filtered = extract_outcome_measurements(data[study], keywords)
+    if not df_filtered.empty:
+        df_filtered["Study"] = study
 
-    primary_outcomes = outcomes_module.get("primaryOutcomes", [])
-    secondary_outcomes = outcomes_module.get("secondaryOutcomes", [])
+if df_filtered.empty:
+    st.warning("Nu există date numerice disponibile pentru selecția curentă.")
+else:
+    st.subheader(f"Datele pentru {'toate studiile' if study == 'Toate Studiile' else study} - {measure_type}")
+    st.dataframe(df_filtered)
+
+    # Bar Chart
+    st.subheader("📊 Valori medii per grup (și studiu)")
+    fig_bar = px.bar(df_filtered, x="Group", y="Value", color="Group",
+                     barmode="group", facet_col="Study" if study == "Toate Studiile" else None,
+                     title="Valori medii pe grupuri")
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    # CI
+    st.subheader("📏 Valori medii și Interval de Încredere (95%)")
+    fig_error = go.Figure()
+    for grp in df_filtered["Group"].unique():
+        sub = df_filtered[df_filtered["Group"] == grp]
+        fig_error.add_trace(go.Bar(
+            name=grp,
+            x=sub["Measure"] + ", " + sub["Study"] if "Study" in sub else sub["Measure"],
+            y=sub["Value"],
+            error_y=dict(
+                type='data',
+                array=sub["Upper"] - sub["Value"],
+                arrayminus=sub["Value"] - sub["Lower"]
+            )
+        ))
+    fig_error.update_layout(barmode='group')
+    st.plotly_chart(fig_error, use_container_width=True)
 
    
-    #DataFrame pt afisare
-    primary_df = pd.DataFrame([{
-        "Măsură": outcome.get("measure", "N/A"),
-        "Descriere": outcome.get("description", "N/A"),
-        "Interval de timp": outcome.get("timeFrame", "N/A")
-    } for outcome in primary_outcomes])
+# Violin Plot
+st.subheader("🎻 Distribuția valorilor (Violin Plot)")
 
-    secondary_df = pd.DataFrame([{
-        "Măsură": outcome.get("measure", "N/A"),
-        "Descriere": outcome.get("description", "N/A"),
-        "Interval de timp": outcome.get("timeFrame", "N/A")
-    } for outcome in secondary_outcomes])
-
-    st.markdown("### 📌 Outcome-uri Primare")
-    st.dataframe(primary_df, use_container_width=True)
-
-    st.markdown("### 📌 Outcome-uri Secundare")
-    st.dataframe(secondary_df, use_container_width=True)
-
-   
-    st.subheader("📈 Analiză Vizuală a Outcome-urilor")
-    categories = ["Outcome-uri Primare", "Outcome-uri Secundare"]
-    num_outcomes = [len(primary_outcomes), len(secondary_outcomes)]
-
-    fig = go.Figure(data=[go.Bar(x=categories, y=num_outcomes, marker_color=['#4CAF50', '#FF9800'])])
-    fig.update_layout(
-        title="Numărul de Outcome-uri per Categorie",
-        xaxis_title="Categorie",
-        yaxis_title="Număr de Outcome-uri",
-        height=400,
-        font=dict(size=14)
-    )
-    st.plotly_chart(fig, use_container_width=True)
+fig_violin = px.violin(
+    df_filtered,
+    x="Group",
+    y="Value",
+    color="Group",
+    box=True,  
+    points="all",  
+    title="Distribuția valorilor și estimarea densității "
+)
+st.plotly_chart(fig_violin, use_container_width=True)
