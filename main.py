@@ -61,13 +61,3 @@ if 'secondaryOutcomes' in outcome_module and outcome_module['secondaryOutcomes']
 if not outcome_module.get('primaryOutcomes') and not outcome_module.get('secondaryOutcomes'):
     st.write("Nu sunt disponibile outcome-uri pentru acest studiu.")
 
-# Navigare
-st.sidebar.title("📂 Meniu Navigare")
-
-st.sidebar.page_link("pages/1_Demografie.py", label="🔍 Demografie participanți")
-st.sidebar.page_link("pages/2_Eficienta.py", label="📈 Eficiența tratamentului")
-st.sidebar.page_link("pages/3_Siguranta.py", label="🛡️ Siguranță TEAE/SAE")
-st.sidebar.page_link("pages/4_Outcomeuri.py", label="📊 Rezultate")
-st.sidebar.page_link("pages/5_MetaAnaliza.py", label="📑 Meta-Analiza și Subgrupuri")
-st.sidebar.page_link("pages/6_Comparatii.py", label="📉 Comparații între studii")
-st.sidebar.page_link("pages/7_ExplorareLibera.py", label="🔎 Explorare liberă") 
