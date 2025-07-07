@@ -50,8 +50,8 @@ for grup in grupe:
 
 # ForestPlot
 date_grupuri = {
-    grup["title"]: [0.15, 0.05, 0.25] if grup["id"] in participanti_grupuri else [0, 0, 0]
-    for grup in grupe
+   grup["title"]: [0.15, 0.05, 0.25] if grup["id"] in participanti_grupuri else [0, 0, 0]
+   for grup in grupe
 }
 
 # Medie, CI inferior si superior per grup
@@ -60,39 +60,39 @@ lower_ci = [min(date) for date in date_grupuri.values()]
 upper_ci = [max(date) for date in date_grupuri.values()]
 
 # ForestPlot
-fig = go.Figure()
+#fig = go.Figure()
 
-for index, row in enumerate(zip(date_grupuri.keys(), mean_diff, lower_ci, upper_ci)):
-    grup, mean, lower, upper = row
+#for index, row in enumerate(zip(date_grupuri.keys(), mean_diff, lower_ci, upper_ci)):
+ #   grup, mean, lower, upper = row
 
    
-    fig.add_trace(go.Scatter(
-        x=[mean],
-        y=[grup],
-        mode='markers',
-        marker=dict(color='blue', size=10),
-        name=f'{grup} - Diferență Medie'
-    ))
+  #  fig.add_trace(go.Scatter(
+   #     x=[mean],
+    #    y=[grup],
+     #   mode='markers',
+      #  marker=dict(color='blue', size=10),
+       # name=f'{grup} - Diferență Medie'
+    #))
 
     
-    fig.add_trace(go.Scatter(
-        x=[lower, upper],
-        y=[grup, grup],
-        mode='lines',
-        line=dict(color='blue', width=2),
-        name=f'{grup} - Interval Confidență 95%'
-    ))
+   # fig.add_trace(go.Scatter(
+    #    x=[lower, upper],
+     #   y=[grup, grup],
+      #  mode='lines',
+       # line=dict(color='blue', width=2),
+        #name=f'{grup} - Interval Confidență 95%'
+    #))
 
-fig.update_layout(
-    title="📉 Forest Plot pentru Compararea Grupurilor",
-    xaxis_title="Diferența Medie",
-    yaxis_title="Grupuri",
-    height=400,
-    showlegend=True,
-    template="plotly_dark"
-)
+#fig.update_layout(
+ #   title="📉 Forest Plot pentru Compararea Grupurilor",
+  #  xaxis_title="Diferența Medie",
+   # yaxis_title="Grupuri",
+    #height=400,
+  #  showlegend=True,
+ #   template="plotly_dark"
+#)
 
-st.plotly_chart(fig, use_container_width=True)
+#st.plotly_chart(fig, use_container_width=True)
 
 # Tabel Statictici
 st.markdown("### 🧮 Tabel de statistici pentru fiecare grup selectat")
@@ -110,9 +110,9 @@ if st.button("Descarcă tabelul de statistici ca CSV"):
     csv = df_stats.to_csv(index=False)
     st.download_button("Descarcă CSV", csv, "tabel_statistici.csv", "text/csv")
 
-if st.button("Descarcă Forest Plot ca imagine"):
-    fig.write_image("forest_plot.png")
-    st.download_button("Descarcă Forest Plot", "forest_plot.png", "image/png")
+#if st.button("Descarcă Forest Plot ca imagine"):
+ #   fig.write_image("forest_plot.png")
+  #  st.download_button("Descarcă Forest Plot", "forest_plot.png", "image/png")
 
     st.markdown("## 🔎 Subgroup Analysis")
     subgroup = st.selectbox("Selectează subgrupul pentru analiză:", ["Sex", "Vârstă"])
